@@ -1,0 +1,27 @@
+{
+    "dependencies":{
+        "codechecker-core":"^1.0.0"
+    },
+    "documentation":"https://github.com/commandbox-modules/commandbox-codechecker",
+    "homepage":"https://github.com/commandbox-modules/commandbox-codechecker",
+    "ignore":[
+        "**/.*",
+        "tests"
+    ],
+    "location":"commandbox-modules/commandbox-codechecker#v1.0.0",
+    "name":"CodeChecker CLI",
+    "projectURL":"https://github.com/commandbox-modules/commandbox-codechecker",
+    "repository":{
+        "type":"Git",
+        "URL":"https://github.com/commandbox-modules/commandbox-codechecker.git"
+    },
+    "scripts":{
+        "postVersion":"package set location='commandbox-modules/commandbox-codechecker#v`package version`'",
+        "onRelease":"publish",
+        "postPublish":"!git push --follow-tags"
+    },
+    "shortDescription":"The CLI for CodeChecker",
+    "slug":"commandbox-codechecker",
+    "type":"commandbox-modules",
+    "version":"0.9.0"
+}
