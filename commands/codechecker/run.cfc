@@ -97,6 +97,10 @@ component {
 		return appFileSystemPathDisplay;
 	}
 	
+
+	/**
+	* Translate severity number of 1-5 into a color.  More red means more bad.  More yellow means more meh.
+	*/
 	private function color( severity ) {
 		
 		if( severity == 1 ) {
