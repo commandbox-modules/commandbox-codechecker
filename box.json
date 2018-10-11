@@ -23,5 +23,5 @@
     "shortDescription":"The CLI for CodeChecker",
     "slug":"commandbox-codechecker",
     "type":"commandbox-modules",
-    "version":"0.9.0"
+    "version":"1.0.0"
 }
