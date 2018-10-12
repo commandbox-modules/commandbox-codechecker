@@ -8,7 +8,7 @@
 
 # CodeChecker CLI
 
-A CLI wrapper for the CodeChecker project
+A CLI wrapper for the CodeChecker project.  This CLI bundles the [CodeChecker core libraries](https://github.com/coldbox-modules/codechecker-core) for use in the command line.
 
 ## Installation
 

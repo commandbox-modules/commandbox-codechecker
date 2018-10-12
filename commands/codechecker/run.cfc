@@ -116,32 +116,32 @@ component {
 		
 		print
 			.line()
-			.boldLine( '   ____ ____ ___  ____ ____ _  _ ____ ____ _  _ ____ ____  ', thisColor & 'onWhite' )
-			.boldLine( '   |    |  | |  \ |___ |    |__| |___ |    |_/  |___ |__/  ', thisColor & 'onWhite' )
-			.boldLine( '   |___ |__| |__/ |___ |___ |  | |___ |___ | \_ |___ |  \  ', thisColor & 'onWhite' )
-			.boldLine( '                                                           ', thisColor & 'onWhite' )
+			.boldLine( '   ____ ____ ___  ____ ____ _  _ ____ ____ _  _ ____ ____  ', 'on#thisColor#' )
+			.boldLine( '   |    |  | |  \ |___ |    |__| |___ |    |_/  |___ |__/  ', 'on#thisColor#' )
+			.boldLine( '   |___ |__| |__/ |___ |___ |  | |___ |___ | \_ |___ |  \  ', 'on#thisColor#' )
+			.boldLine( '                                                           ', 'on#thisColor#' )
 			.line()
-			.boldText( '   #qryResult.recordcount# issues found' );
+			.boldRedText( '   #qryResult.recordcount# issues found' );
 			
 		if( results.len() ) {	
-			print.boldLine( ' in #qryCats.recordCount# categor#iif( qryCats.recordCount == 1, de( 'y' ), de( 'ies' ) )#.' );
+			print.boldRedLine( ' in #qryCats.recordCount# categor#iif( qryCats.recordCount == 1, de( 'y' ), de( 'ies' ) )#.' );
 		} else {
-			print.boldLine( '.' );			
+			print.boldRedLine( '.' );			
 		}
 		
 		print.line( '   ----------------------------------------------------------' );
 		
 		qryCats.each( function( cat ) {
-			print.line( '   -- #cat.catCount# issues in #cat.category#' );
+			print.text( '   -- #cat.catCount# issues in ' ).boldBlueLine( cat.category );
 		} );
 			
 		if( results.len() ) {
 			print
 				.line( '   ----------------------------------------------------------' )
 				.line()
-				.yellowLine( '   Export the full results to Excel with the "excelReportPath" parameter.' )
-				.yellowLine( '   Output the full results to the Console with --verbose.' )
-				.yellowLine( '   Filter out lower severity issues with minSeverity=5' )
+				.yellow( '   Export the full results to Excel with the "' ).white( 'excelReportPath' ).yellowLine( '" parameter.' )
+				.yellow( '   See full results with "' ).white( '--verbose | more' ).yellowLine( '".' )
+				.yellow( '   Filter out lower severity issues with "' ).white( 'minSeverity=5' ).yellowLine( '"' )
 				.line()
 				.line();
 		}
@@ -168,7 +168,6 @@ component {
 						
 		}
 		
-			
 		if( verbose ) {
 			results.each( function( result ) {
 				print
@@ -185,20 +184,20 @@ component {
 	*/
 	private function shortenPath( path ) {
 		var maxWidth = shell.getTermWidth() - 25;
-		var appFileSystemPathDisplay = path;
+		var displayPath = path;
 		// Deal with possibly very deep folder structures which would look bad in the menu or possible reach off the screen
-		if( appFileSystemPathDisplay.len() > maxWidth && appFileSystemPathDisplay.listLen( '/' ) > 2 ) {
-			var pathLength = appFileSystemPathDisplay.listLen( '/' );
-			var firstFolder = appFileSystemPathDisplay.listFirst( '/' );
-			var lastFolder = appFileSystemPathDisplay.listLast( '/' );
-			var middleStuff = appFileSystemPathDisplay.listDeleteAt( pathLength, '/' ).listDeleteAt( 1, '/' );
+		if( displayPath.len() > maxWidth && displayPath.listLen( '/' ) > 2 ) {
+			var pathLength = displayPath.listLen( '/' );
+			var firstFolder = displayPath.listFirst( '/' );
+			var lastFolder = displayPath.listLast( '/' );
+			var middleStuff = displayPath.listDeleteAt( pathLength, '/' ).listDeleteAt( 1, '/' );
 			// Ignoring slashes here.  Doesn't need to be exact.
 			var leftOverLen = max( maxWidth - (firstFolder.len() + lastFolder.len() ), 1 );
 			// This will shorten the path to C:/firstfolder/somes/tuff.../lastFolder/
 			// with a final result that is close to 50 characters
-			appFileSystemPathDisplay = firstFolder & '/' & middleStuff.left( leftOverLen ) & '.../' & lastFolder;
+			displayPath = firstFolder & '/' & middleStuff.left( leftOverLen ) & '.../' & lastFolder;
 		}
-		return appFileSystemPathDisplay;
+		return displayPath;
 	}
 	
 
