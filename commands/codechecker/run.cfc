@@ -4,33 +4,69 @@
 * {code:bash}
 * codechecker run
 * {code}
+* .
+* If a .codechecker.json file is found in the current working directory, it will be picked up and used.
+* This file can contain the following keys:
+* .
+* - paths - Comma delimited list of file globbing paths to scan if nothing is passed to this command
+* - minSeverity - Minimum rule severity to consider if nothing is passed to this command
+* - includeRules - A struct of arrays where each struct key is a rule category and the array contains rule names to run.
+* - excludeRules - Same format as includeRules but these rules are EXCLUDED from the final list.
+* - ruleFiles - Array of absolute or relative (to the JSON file) paths to JSON files containing an arary of structs defining rules to run
+* - customRules - An array of structs defining rules to run.
+* .
+* An example rule struct would be like so:
+* {code:js}
+* {
+*  "pattern": "cfoutput",
+*  "message": "CFoutput is lame",
+*  "category": "One-off Rules",
+*  "name": "Don't use CFoutput",
+*  "extensions": "cfm,cfc",
+*  "severity": "3"
+* }
+* {code}
 */
 component {
-	property name='codeCheckerService' 	inject='codeCheckerService@codechecker-core';
-	property name='rulesService' 		inject='rulesService@codechecker-core';
 	property name='ExportService' 		inject='ExportService@codechecker-core';
 	property name='progress'	 		inject='progressBarGeneric';
 	
 	/**
-	*
+	* @categories Comma delimited list of categories of rules to run
+	* @categories.optionsUDF categoryComplete
+	* @paths Comma delimited list of file globbing paths to scan. i.e. **.cf?
+	* @paths.optionsFileComplete true
+	* @minSeverity Minimum rule severity to consider. Level 1-5
+	* @minSeverity.options 1,2,3,4,5
+	* @excelReportPath Path to write Excel report to
+	* @verbose Output full list of files being scanned and all items found to the console
 	*/
 	function run(
-		struct categories={ '_all'  : '' },
-		string paths='**.cf?',
-		numeric minSeverity=1,
+		string categories,
+		string paths,
+		numeric minSeverity,
 		string excelReportPath,
 		boolean verbose=false
 		) {
+
+		try {
+			// Get a fresh instance since the loaded rules are directory-aware
+			var codeCheckerService = getInstance( 'codeCheckerService@codechecker-core' ).configure( getCWD() );
+		} catch( codecheckerMissingRuleFile var e ) {
+			error( message=e.message, detail=e.detail );
+		}
 		
 		// Incoming pattern can be comma delimited list
-		paths = paths.listToArray();
+		
+		var thisPaths = arguments.paths ?: codeCheckerService.getConfigJSON().paths ?: '**.cf?';
+		thisPaths = thisPaths.listToArray();
 		
 		job.start( 'Running CodeChecker' );
 					
 			job.start( 'Resolving files for scan' );
 				
 				var combinedPaths = [];
-				paths.each( function( path ) {
+				thisPaths.each( function( path ) {
 					
 					var thisCount = 0;
 					job.addLog( 'Collecting files at #path#' );
@@ -67,12 +103,14 @@ component {
 			job.complete( verbose );
 			
 			
-			if( categories.keyList() == '_all' ) {
-				categories = rulesService.getCategories().toList();
+			if( !isNull( categories ) ) {
+				categories = codeCheckerService.getRulesService().getCategories().toList();
 			}
 	
 			codeCheckerService.setCategories( categories );
-			codeCheckerService.setMinSeverity( minSeverity );
+			if( !isNull( minSeverity ) ) {
+				codeCheckerService.setMinSeverity( minSeverity );	
+			}
 				
 			job.start( 'Running Rules', 10 );
 			
@@ -81,13 +119,19 @@ component {
 				var currFile = 0;
 				combinedPaths.each( function( path ) {
 					currFile++;
-					job.addLog( 'Scanning ' & path );
-					//job.addLog( 'Scanning ' & shortenPath( path ) );
-					progress.update( ( currFile/fileCount) * 100, currFile, fileCount );
-					if( fileExists( path ) ) {
-						var resultsCodeChecker = codeCheckerService.startCodeReview( filepath=path );	
+					// Interactive jobs are not thread safe!!
+					lock name="codechecker-run-update" timeout="20" { 
+						job.addLog( 'Scanning ' & shortenPath( path ) );
+						progress.update( ( currFile/fileCount) * 100, currFile, fileCount );
 					}
-				} );
+					if( fileExists( path ) ) {
+						var resultsCodeChecker = codeCheckerService.startCodeReview( filepath=path );
+					}
+				},
+				// Parrallel execution
+				true,
+				// No more threads than CPU cores.
+				createObject( 'java', 'java.lang.Runtime' ).getRuntime().availableProcessors() );
 		
 				progress.clear();
 				
@@ -124,11 +168,11 @@ component {
 			.boldRedText( '   #qryResult.recordcount# issues found' );
 			
 		if( results.len() ) {	
-			print.boldRedLine( ' in #qryCats.recordCount# categor#iif( qryCats.recordCount == 1, de( 'y' ), de( 'ies' ) )#.' );
-		} else {
-			print.boldRedLine( '.' );			
+			print.boldRedText( ' in #qryCats.recordCount# categor#iif( qryCats.recordCount == 1, de( 'y' ), de( 'ies' ) )#' );
 		}
-		
+		var numRules = codeCheckerService.getRules().len();
+		print.boldRedLine( ' using #numRules# rule#iif( numRules == 1, de( '' ), de( 's' ) )#.' );
+				
 		print.line( '   ----------------------------------------------------------' );
 		
 		qryCats.each( function( cat ) {
@@ -167,7 +211,7 @@ component {
 				.line();
 						
 		}
-		
+			
 		if( verbose ) {
 			results.each( function( result ) {
 				print
@@ -218,6 +262,15 @@ component {
 			return 'Red1';
 		}
 		
+	}
+	
+	function categoryComplete() {
+		try {
+			// Get a fresh instance since the loaded rules are directory-aware
+			var codeCheckerService = getInstance( 'codeCheckerService@codechecker-core' ).configure( getCWD() );
+			return codeCheckerService.getRulesService().getCategories();
+		} catch( any var e ) {}
+		return [];
 	}
 	
 }
