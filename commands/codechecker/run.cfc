@@ -58,7 +58,8 @@ component {
 		
 		// Incoming pattern can be comma delimited list
 		
-		var thisPaths = arguments.paths ?: codeCheckerService.getConfigJSON().paths ?: '**.cf?';
+		var configJSON = codeCheckerService.getConfigJSON()
+		var thisPaths = arguments.paths ?: configJSON.paths ?: '**.cf?';
 		thisPaths = thisPaths.listToArray();
 		
 		job.start( 'Running CodeChecker' );
