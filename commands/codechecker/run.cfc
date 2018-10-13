@@ -114,10 +114,11 @@ component {
 			}
 				
 			job.start( 'Running Rules', 10 );
-			
+							
 				progress.update( 0 );
 		
 				var currFile = 0;
+				var hasErroredScan = false;
 				combinedPaths.each( function( path ) {
 					currFile++;
 					// Interactive jobs are not thread safe!!
@@ -126,7 +127,17 @@ component {
 						progress.update( ( currFile/fileCount) * 100, currFile, fileCount );
 					}
 					if( fileExists( path ) ) {
-						var resultsCodeChecker = codeCheckerService.startCodeReview( filepath=path );
+						try {
+							var resultsCodeChecker = codeCheckerService.startCodeReview( filepath=path );
+						} catch( any var e ) {
+							hasErroredScan = true;
+							job.addErrorLog( 'Error scanning ' & shortenPath( path ) );
+							job.addErrorLog( e.message );
+							job.addErrorLog( e.detail ?: '' );
+							if( e.tagContext.len() ) {
+								job.addErrorLog( e.tagContext[ 1 ].template & ':' &  e.tagContext[ 1 ].line );
+							}							
+						}
 					}
 				},
 				// Parrallel execution
@@ -212,7 +223,16 @@ component {
 				.line();
 						
 		}
-			
+				
+		if( hasErroredScan && !verbose ) {	
+			print
+				.line()
+				.boldRedLine( '   At least one file caused an error while being scanned.' )
+				.boldRedLine( '   Run this command with "--verbose" for details and please report it as a bug.' )
+				.line()
+				.line();
+		}
+		
 		if( verbose ) {
 			results.each( function( result ) {
 				print
