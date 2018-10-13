@@ -106,9 +106,9 @@ component {
 			
 			if( !isNull( categories ) ) {
 				categories = codeCheckerService.getRulesService().getCategories().toList();
+				codeCheckerService.setCategories( categories );
 			}
 	
-			codeCheckerService.setCategories( categories );
 			if( !isNull( minSeverity ) ) {
 				codeCheckerService.setMinSeverity( minSeverity );	
 			}
