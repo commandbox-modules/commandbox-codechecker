@@ -103,8 +103,9 @@ component {
 				sleep( 2000 );
 			job.complete( verbose );
 			
-			
-			if( !isNull( categories ) ) {
+            
+            // categories default should be loaded only, if no categories were passed
+			if( isNull( categories ) ) {
 				categories = codeCheckerService.getRulesService().getCategories().toList();
 				codeCheckerService.setCategories( categories );
 			}
