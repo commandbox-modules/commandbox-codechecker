@@ -32,18 +32,18 @@ component {
 	property name='progress'	 		inject='progressBarGeneric';
 	
 	/**
-	* @categories Comma delimited list of categories of rules to run
-	* @categories.optionsUDF categoryComplete
 	* @paths Comma delimited list of file globbing paths to scan. i.e. **.cf?
 	* @paths.optionsFileComplete true
+	* @categories Comma delimited list of categories of rules to run
+	* @categories.optionsUDF categoryComplete
 	* @minSeverity Minimum rule severity to consider. Level 1-5
 	* @minSeverity.options 1,2,3,4,5
 	* @excelReportPath Path to write Excel report to
 	* @verbose Output full list of files being scanned and all items found to the console
 	*/
 	function run(
-		string categories,
 		string paths,
+		string categories,
 		numeric minSeverity,
 		string excelReportPath,
 		boolean verbose=false
@@ -190,7 +190,7 @@ component {
 		print.line( '   ----------------------------------------------------------' );
 		
 		qryCats.each( function( cat ) {
-			print.text( '   -- #cat.catCount# issues in ' ).boldBlueLine( cat.category );
+			print.text( '   -- #cat.catCount# issue#iif( cat.catCount == 1, de( '' ), de( 's' ) )# in ' ).boldBlueLine( cat.category );
 		} );
 			
 		if( results.len() ) {
