@@ -43,6 +43,7 @@ If a `.codechecker.json` file is found in the current working directory, it will
 - **excludeRules** - Same format as includeRules but these rules are EXCLUDED from the final list.
 - **ruleFiles** - Array of absolute or relative (to the JSON file) paths to JSON files containing an arary of structs defining rules to run
 - **customRules** - An array of structs defining rules to run.
+- **excludePaths** - An array of strings which when matched against filepaths will omit the file from rule evaluations.
 
 Here is an example `.codechecker.json` file:
 
@@ -75,6 +76,11 @@ Here is an example `.codechecker.json` file:
 			"extensions": "cfm,cfc",
 			"severity": "3"
 		}
+	], 
+	"excludePaths" : [
+		"/fuseguard/",
+		"/framework/", 
+		"MySpecialFile.cfm"
 	]
 }
 ```
