@@ -30,7 +30,9 @@
 component {
 	property name='ExportService' 		inject='ExportService@codechecker-core';
 	property name='progress'	 		inject='progressBarGeneric';
-	
+	property name='REPLHighlighter'	 	inject='REPLHighlighter';
+	property name='p'					inject='print';
+
 	/**
 	* @paths Comma delimited list of file globbing paths to scan. i.e. **.cf?
 	* @paths.optionsFileComplete true
@@ -55,23 +57,23 @@ component {
 		} catch( codecheckerMissingRuleFile var e ) {
 			error( message=e.message, detail=e.detail );
 		}
-		
+
 		// Incoming pattern can be comma delimited list
-		
+
 		var configJSON = codeCheckerService.getConfigJSON()
 		var thisPaths = arguments.paths ?: configJSON.paths ?: '**.cf?';
 		thisPaths = thisPaths.listToArray();
-		
+
 		job.start( 'Running CodeChecker' );
-					
+
 			job.start( 'Resolving files for scan' );
-				
+
 				var combinedPaths = [];
 				thisPaths.each( function( path ) {
-					
+
 					var thisCount = 0;
 					job.addLog( 'Collecting files at #path#' );
-					
+
 					path = filesystemUtil.resolvePath( path );
 					// Fix /model to be /models/** which is probably what they meant
 					if( directoryExists( path ) ) {
@@ -85,46 +87,46 @@ component {
 							// Only store up unique paths and ignore that pesky .git folder
 							if( !combinedPaths.contains( i ) && !i.find( '/.git/' ) ) {
 								combinedPaths.append( i );
-								thisCount++;	
+								thisCount++;
 							}
 						} );
-						
+
 					job.addLog( '#thisCount# files found' );
-						
-			
+
+
 				} );
-			
+
 			var fileCount = combinedPaths.len();
-			
+
 			job.complete( verbose );
-					
+
 			var huevos = [ 'Starting Rules Engine', 'Polishing ASCII Art', 'Sorting JSON', 'Aligning Goals', 'Brewing Coffee', 'Assessing penalty kicks', 'Washing vegetables', 'Bolstering Public Opinion', 'Adjusting Volume', 'Replacing Batteries', 'Loreming Ipsums', 'Reducing Technical Debt' ];
 			job.start( huevos[ randRange( 1, huevos.len() ) ] );
 				sleep( 2000 );
 			job.complete( verbose );
-			
-            
+
+
             // categories default should be loaded only, if no categories were passed
 			if( isNull( categories ) ) {
 				categories = codeCheckerService.getRulesService().getCategories().toList();
 			}
-				
+
 			codeCheckerService.setCategories( categories );
-			
+
 			if( !isNull( minSeverity ) ) {
-				codeCheckerService.setMinSeverity( minSeverity );	
+				codeCheckerService.setMinSeverity( minSeverity );
 			}
-				
+
 			job.start( 'Running Rules', 10 );
-							
+
 				progress.update( 0 );
-		
+
 				var currFile = 0;
 				var hasErroredScan = false;
 				combinedPaths.each( function( path ) {
 					currFile++;
 					// Interactive jobs are not thread safe!!
-					lock name="codechecker-run-update" timeout="20" { 
+					lock name="codechecker-run-update" timeout="20" {
 						job.addLog( 'Scanning ' & shortenPath( path ) );
 						progress.update( ( currFile/fileCount) * 100, currFile, fileCount );
 					}
@@ -138,7 +140,7 @@ component {
 							job.addErrorLog( e.detail ?: '' );
 							if( e.tagContext.len() ) {
 								job.addErrorLog( e.tagContext[ 1 ].template & ':' &  e.tagContext[ 1 ].line );
-							}							
+							}
 						}
 					}
 				},
@@ -146,32 +148,32 @@ component {
 				true,
 				// No more threads than CPU cores.
 				createObject( 'java', 'java.lang.Runtime' ).getRuntime().availableProcessors() );
-		
+
 				progress.clear();
-				
+
 			job.complete( verbose );
-	
+
 			var results = codeCheckerService.getResults();
 
 		job.complete( verbose );
-		
+
 		var qryResult = queryNew( 'directory,file,rule,message,linenumber,category,severity' );
-		
+
 		results.each( function( result ) {
 			qryResult.addRow( result );
 		} );
-		
-		var qryCats = queryExecute( 
+
+		var qryCats = queryExecute(
 			'SELECT category, count(1) as catCount
 			FROM qryResult
 			GROUP BY category',
 			[],
 			{ dbtype='query' }
 		 );
-		
+
 		var colors = [ 'DarkMagenta2', 'DeepPink2', 'Blue1', 'SpringGreen2', 'OrangeRed1', 'Grey' ];
 		var thisColor = colors[ randRange( 1, colors.len() ) ];
-		
+
 		print
 			.line()
 			.boldLine( '   ____ ____ ___  ____ ____ _  _ ____ ____ _  _ ____ ____  ', 'on#thisColor#' )
@@ -180,19 +182,19 @@ component {
 			.boldLine( '                                                           ', 'on#thisColor#' )
 			.line()
 			.boldRedText( '   #qryResult.recordcount# issues found' );
-			
-		if( results.len() ) {	
+
+		if( results.len() ) {
 			print.boldRedText( ' in #qryCats.recordCount# categor#iif( qryCats.recordCount == 1, de( 'y' ), de( 'ies' ) )#' );
 		}
 		var numRules = codeCheckerService.getRules().len();
 		print.boldRedLine( ' using #numRules# rule#iif( numRules == 1, de( '' ), de( 's' ) )#.' );
-				
+
 		print.line( '   ----------------------------------------------------------' );
-		
+
 		qryCats.each( function( cat ) {
 			print.text( '   -- #cat.catCount# issue#iif( cat.catCount == 1, de( '' ), de( 's' ) )# in ' ).boldBlueLine( cat.category );
 		} );
-			
+
 		if( results.len() ) {
 			print
 				.line( '   ----------------------------------------------------------' )
@@ -203,30 +205,30 @@ component {
 				.line()
 				.line();
 		}
-		
+
 		if( !isNull( arguments.excelReportPath ) ) {
 			excelReportPath = filesystemUtil.resolvePath( excelReportPath );
-			
+
 			// If we were given a directory
 			if( !( excelReportPath.right( 4 ) == '.xls' ) ){
 				// Make up a file name
 				excelReportPath &= '/codechecker-report-#dateTimeFormat( now(), 'yyyy-mm-dd-HHMMSS' )#.xls';
 			}
-			
+
 			var binary = exportService.generateExcelReport( results, categories );
-			
+
 			directoryCreate( getDirectoryFromPath( excelReportPath ), true, true );
 			fileWrite( excelReportPath, binary );
-			
+
 			print
 				.greenLine( '   Excel report created at:' )
 				.greenLine( '      #excelReportPath#' )
 				.line()
 				.line();
-						
+
 		}
-				
-		if( hasErroredScan && !verbose ) {	
+
+		if( hasErroredScan && !verbose ) {
 			print
 				.line()
 				.boldRedLine( '   At least one file caused an error while being scanned.' )
@@ -234,14 +236,27 @@ component {
 				.line()
 				.line();
 		}
-		
+
 		if( verbose ) {
 			results.each( function( result ) {
 				print
 					.line( '#result.rule# | #result.category# | Severity: #result.severity#', color( result.severity ) )
 					.IndentedYellowLine( result.message )
-					.IndentedLine( shortenPath( result.directory & result.file & ':' & result.lineNumber ) )
-					.line();
+					.IndentedLine( shortenPath( result.directory & result.file & ':' & result.lineNumber ) );
+
+				var codeLine = trim( result.codeLine ?: '' );
+				if( codeLine.len() ) {
+					if( codeLine contains "<cf" ) {
+						var formattedCodeLine = tagHighlighter( codeLine );
+					} else {
+						var formattedCodeLine = REPLHighlighter.highlight( '', codeLine ).toAnsi( shell.getReader().getTerminal() );
+					}
+					print
+						.line()
+						.IndentedLine( formattedCodeLine );
+				}
+
+				print.line();
 			} );
 		}
 	}
@@ -266,13 +281,13 @@ component {
 		}
 		return displayPath;
 	}
-	
+
 
 	/**
 	* Translate severity number of 1-5 into a color.  More red means more bad.  More yellow means more meh.
 	*/
 	private function color( severity ) {
-		
+
 		if( severity == 1 ) {
 			return 'Gold1';
 		} else if( severity == 2 ) {
@@ -284,9 +299,9 @@ component {
 		} else {
 			return 'Red1';
 		}
-		
+
 	}
-	
+
 	function categoryComplete() {
 		try {
 			// Get a fresh instance since the loaded rules are directory-aware
@@ -295,6 +310,47 @@ component {
 		} catch( any var e ) {}
 		return [];
 	}
-	
+
+	// basic tag hightlighting
+	private function tagHighlighter( codeLine ) {
+
+
+		// highight quoted strings
+		codeLine = reReplaceNoCase( codeLine, '("[^"<##]*")', p.red( '\1' ), 'all' );
+		codeLine = reReplaceNoCase( codeLine, "('[^'<##]*')", p.red( '\1' ), 'all' );
+
+
+		// highlight tag names
+		codeLine = reReplaceNoCase( codeLine, '<([^ >]*)( |>)', '<' & p.boldAqua( '\1' ) & '\2', 'all' );
+
+		// Highlight function calls
+		codeLine = reReplaceNoCase( codeLine, '(^|[ \-##\.\{\}\(\)])([^ \-##\.\{\}\(\)]*)(\()', '\1' & p.boldYellow( '\2' ) & '\3', 'all' );
+
+		var reservedWords = [
+			' var ',
+			' true ',
+			' false ',
+			' function',
+			' GT ',
+			' LT ',
+			' GTE ',
+			' LTE ',
+			' EQ ',
+			' NEQ ',
+			' IS ',
+			' AND ',
+			' OR '
+		].toList( '|' );
+
+		// highight reserved words
+		codeLine = reReplaceNoCase( codeLine, '(#reservedWords#)', p.boldCyan( '\1' ), 'all' );
+
+		// highight pound signs
+		codeLine = reReplaceNoCase( codeLine, '##', p.boldCyan( '##' ), 'all' );
+
+
+		return codeLine;
+	}
+
 }
 
