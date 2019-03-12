@@ -8,7 +8,7 @@
         "**/.*",
         "tests"
     ],
-    "location":"commandbox-modules/commandbox-codechecker#v1.0.7",
+    "location":"commandbox-modules/commandbox-codechecker#v1.1.0",
     "name":"CodeChecker CLI",
     "projectURL":"https://github.com/commandbox-modules/commandbox-codechecker",
     "repository":{
@@ -23,5 +23,5 @@
     "shortDescription":"The CLI for CodeChecker",
     "slug":"commandbox-codechecker",
     "type":"commandbox-modules",
-    "version":"1.0.7"
+    "version":"1.1.0"
 }
