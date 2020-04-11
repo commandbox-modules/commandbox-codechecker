@@ -36,6 +36,8 @@ component {
 	/**
 	* @paths Comma delimited list of file globbing paths to scan. i.e. **.cf?
 	* @paths.optionsFileComplete true
+	* @excludePaths Comma delimited list of file globbing paths to exclude. i.e. ignored/**.cf?
+	* @excludePaths.optionsFileComplete true
 	* @categories Comma delimited list of categories of rules to run
 	* @categories.optionsUDF categoryComplete
 	* @minSeverity Minimum rule severity to consider. Level 1-5
@@ -45,6 +47,7 @@ component {
 	*/
 	function run(
 		string paths,
+		string excludePaths,
 		string categories,
 		numeric minSeverity,
 		string excelReportPath,
@@ -61,42 +64,56 @@ component {
 		// Incoming pattern can be comma delimited list
 
 		var configJSON = codeCheckerService.getConfigJSON()
-		var thisPaths = arguments.paths ?: configJSON.paths ?: '**.cf?';
-		thisPaths = thisPaths.listToArray();
+		var includedPaths = arguments.paths ?: configJSON.paths ?: '**.cf?';
+		includedPaths = includedPaths
+			.listToArray()
+			.map( function(path) {
+				path = filesystemUtil.resolvePath( path );
+
+				// Fix /model to be /models/** which is probably what they meant
+				if( directoryExists( path ) ) {
+					path &= '**';
+				}
+
+				return path;
+			} );
+
+		var excludedPaths = arguments.excludePaths ?: configJSON.excludePaths ?: '';
+		excludedPaths = excludedPaths.listToArray();
+
+		excludedPaths = excludedPaths
+			.map( function(path) {
+				return filesystemUtil.resolvePath( path );
+			})
+			.map( function(path) {
+				return filesystemUtil.normalizeSlashes( path );
+			});
 
 		job.start( 'Running CodeChecker' );
 
 			job.start( 'Resolving files for scan' );
 
 				var combinedPaths = [];
-				thisPaths.each( function( path ) {
+				globber( includedPaths )
+					.setExcludePattern( excludedPaths )
+					.asArray()
+					.matches()
+					.each( function( i ) {
+						i = fileSystemUtil.normalizeSlashes( i );
 
-					var thisCount = 0;
-					job.addLog( 'Collecting files at #path#' );
+						// Ignore that pesky .git folder
+						if( i.find( '/.git/' ) ) {
+							continue;
+						}
 
-					path = filesystemUtil.resolvePath( path );
-					// Fix /model to be /models/** which is probably what they meant
-					if( directoryExists( path ) ) {
-						path &= '**';
-					}
-					globber( path )
-						.asArray()
-						.matches()
-						.each( function( i ) {
-							i = fileSystemUtil.normalizeSlashes( i );
-							// Only store up unique paths and ignore that pesky .git folder
-							if( !combinedPaths.contains( i ) && !i.find( '/.git/' ) ) {
-								combinedPaths.append( i );
-								thisCount++;
-							}
-						} );
+						// Only store up unique paths and
+						if( !combinedPaths.contains( i ) ) {
+							combinedPaths.append( i );
+						}
+					} );
 
-					job.addLog( '#thisCount# files found' );
-
-
-				} );
-
-			var fileCount = combinedPaths.len();
+				var fileCount = combinedPaths.len();
+				job.addLog( '#fileCount# files found' );
 
 			job.complete( verbose );
 
