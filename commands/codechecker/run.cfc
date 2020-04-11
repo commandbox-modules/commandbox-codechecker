@@ -144,7 +144,7 @@ component {
 						}
 					}
 				},
-				// Parrallel execution
+				// Parallel execution
 				true,
 				// No more threads than CPU cores.
 				createObject( 'java', 'java.lang.Runtime' ).getRuntime().availableProcessors() );
@@ -353,4 +353,3 @@ component {
 	}
 
 }
-
