@@ -263,7 +263,7 @@ component {
 		}
 
 		if( results.len() && failOnMatch ) {
-			error("", 1);
+			setExitCode( 1 );
 		}
 	}
 
