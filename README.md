@@ -33,6 +33,7 @@ codechecker run
 * **minSeverity** - Minimum rule severity to consider. Level 1-5. (overrides `paths` in JSON)
 * **excelReportPath** - Path to write Excel report to
 * **verbose** = "false" - Output full list of files being scanned and all items found to the console
+* **failOnMatch** = "false" - Sets a non-zero exit code if any matches are found
 
 ### JSON Configuration
 

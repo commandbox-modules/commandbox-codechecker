@@ -44,6 +44,7 @@ component {
 	* @minSeverity.options 1,2,3,4,5
 	* @excelReportPath Path to write Excel report to
 	* @verbose Output full list of files being scanned and all items found to the console
+	* @failOnMatch Sets a non-zero exit code if any matches are found
 	*/
 	function run(
 		string paths,
@@ -51,7 +52,8 @@ component {
 		string categories,
 		numeric minSeverity,
 		string excelReportPath,
-		boolean verbose=false
+		boolean verbose=false,
+		boolean failOnMatch=false
 		) {
 
 		try {
@@ -276,6 +278,10 @@ component {
 				print.line();
 			} );
 		}
+
+		if( results.len() && failOnMatch ) {
+			setExitCode( 1 );
+		}
 	}
 
 	/**
@@ -370,3 +376,4 @@ component {
 	}
 
 }
+

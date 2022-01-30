@@ -8,7 +8,7 @@
         "**/.*",
         "tests"
     ],
-    "location":"commandbox-modules/commandbox-codechecker#v1.1.0",
+    "location":"forgeboxStorage",
     "name":"CodeChecker CLI",
     "projectURL":"https://github.com/commandbox-modules/commandbox-codechecker",
     "repository":{
@@ -16,12 +16,11 @@
         "URL":"https://github.com/commandbox-modules/commandbox-codechecker.git"
     },
     "scripts":{
-        "postVersion":"package set location='commandbox-modules/commandbox-codechecker#v`package version`'",
         "onRelease":"publish",
         "postPublish":"!git push --follow-tags"
     },
     "shortDescription":"The CLI for CodeChecker",
     "slug":"commandbox-codechecker",
     "type":"commandbox-modules",
-    "version":"1.1.0"
+    "version":"1.2.1"
 }
