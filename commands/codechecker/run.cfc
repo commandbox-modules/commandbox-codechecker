@@ -9,7 +9,6 @@
 * This file can contain the following keys:
 * .
 * - paths - Comma delimited list of file globbing paths to scan if nothing is passed to this command
-* - excludePaths - Comma delimited list of file globbing paths to ignore
 * - minSeverity - Minimum rule severity to consider if nothing is passed to this command
 * - includeRules - A struct of arrays where each struct key is a rule category and the array contains rule names to run.
 * - excludeRules - Same format as includeRules but these rules are EXCLUDED from the final list.
@@ -37,8 +36,6 @@ component {
 	/**
 	* @paths Comma delimited list of file globbing paths to scan. i.e. **.cf?
 	* @paths.optionsFileComplete true
-	* @excludePaths Comma delimited list of file globbing paths to ignore
-	* @excludePaths.optionsFileComplete true
 	* @categories Comma delimited list of categories of rules to run
 	* @categories.optionsUDF categoryComplete
 	* @minSeverity Minimum rule severity to consider. Level 1-5
@@ -49,8 +46,7 @@ component {
 	*/
 	function run(
 		string paths,
-		string excludePaths,
-		string categories,
+		string categories='',
 		numeric minSeverity,
 		string excelReportPath,
 		boolean verbose=false,
@@ -59,7 +55,7 @@ component {
 
 		try {
 			// Get a fresh instance since the loaded rules are directory-aware
-			var codeCheckerService = getInstance( 'codeCheckerService@codechecker-core' ).configure( getCWD() );
+			var codeCheckerService = getInstance( 'codeCheckerService@codechecker-core' ).configure( getCWD(), arguments.categories, arguments.minSeverity ?: '' );
 		} catch( codecheckerMissingRuleFile var e ) {
 			error( message=e.message, detail=e.detail );
 		}
@@ -69,20 +65,6 @@ component {
 		var configJSON = codeCheckerService.getConfigJSON()
 		var thisPaths = arguments.paths ?: configJSON.paths ?: '**.cf?';
 		thisPaths = thisPaths.listToArray();
-
-		// Exclude patterns can be a comma delimited list or an array
-		var thisExcludePaths = arguments.excludePaths ?: configJSON.excludePaths ?: '';
-		if( !isArray( thisExcludePaths ) ) {
-			thisExcludePaths = thisExcludePaths.listToArray();
-		}
-		thisExcludePaths = thisExcludePaths.map( function( path ) {
-			path = filesystemUtil.resolvePath( path );
-			if ( directoryExists( path ) ) {
-				path &= '**';
-			}
-
-			return path;
-		} );
 
 		job.start( 'Running CodeChecker' );
 
@@ -100,7 +82,6 @@ component {
 						path &= '**';
 					}
 					globber( path )
-						.setExcludePattern( thisExcludePaths )
 						.asArray()
 						.matches()
 						.each( function( i ) {
@@ -126,17 +107,6 @@ component {
 				sleep( 2000 );
 			job.complete( verbose );
 
-
-            // categories default should be loaded only, if no categories were passed
-			if( isNull( categories ) ) {
-				categories = codeCheckerService.getRulesService().getCategories().toList();
-			}
-
-			codeCheckerService.setCategories( categories );
-
-			if( !isNull( minSeverity ) ) {
-				codeCheckerService.setMinSeverity( minSeverity );
-			}
 
 			job.start( 'Running Rules', 10 );
 
@@ -204,9 +174,14 @@ component {
 			.line()
 			.boldRedText( '   #qryResult.recordcount# issues found' );
 
-		if( results.len() ) {
-			print.boldRedText( ' in #qryCats.recordCount# categor#iif( qryCats.recordCount == 1, de( 'y' ), de( 'ies' ) )#' );
-		}
+		var numCats = codeCheckerService.getRules().reduce( (categories,r)=>{
+				categories[ r.category ] = '';
+				return categories;
+			}, {} )
+			.keyArray()
+			.len();
+		print.boldRedText( ' in #numCats# categor#iif( numCats == 1, de( 'y' ), de( 'ies' ) )#' );
+
 		var numRules = codeCheckerService.getRules().len();
 		print.boldRedLine( ' using #numRules# rule#iif( numRules == 1, de( '' ), de( 's' ) )#.' );
 

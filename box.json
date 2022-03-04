@@ -8,7 +8,6 @@
         "**/.*",
         "tests"
     ],
-    "location":"forgeboxStorage",
     "name":"CodeChecker CLI",
     "projectURL":"https://github.com/commandbox-modules/commandbox-codechecker",
     "repository":{
