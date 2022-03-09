@@ -57,11 +57,11 @@ component {
 
 		try {
 			// Get a fresh instance since the loaded rules are directory-aware
-			
+			arguments.configPath = resolvePath( arguments.configPath );
 			if( !( fileExists( configPath ) || directoryExists( configPath ) ) ) {
 				error( 'Config path [#configPath#] does not exist.' );
 			}
-			var codeCheckerService = getInstance( 'codeCheckerService@codechecker-core' ).configure( resolvePath( arguments.configPath ), arguments.categories, arguments.minSeverity ?: '' );
+			var codeCheckerService = getInstance( 'codeCheckerService@codechecker-core' ).configure( arguments.configPath, arguments.categories, arguments.minSeverity ?: '' );
 		} catch( codecheckerMissingRuleFile var e ) {
 			error( message=e.message, detail=e.detail );
 		}
