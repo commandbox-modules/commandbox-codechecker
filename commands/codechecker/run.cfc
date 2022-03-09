@@ -50,7 +50,7 @@ component {
 		string categories='',
 		numeric minSeverity,
 		string excelReportPath,
-		boolean configPath=getCWD(),
+		string configPath=getCWD(),
 		boolean verbose=false,
 		boolean failOnMatch=false
 		) {
