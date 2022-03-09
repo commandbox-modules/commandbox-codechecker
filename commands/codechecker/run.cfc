@@ -57,7 +57,9 @@ component {
 
 		try {
 			// Get a fresh instance since the loaded rules are directory-aware
-			arguments.configPath = resolvePath( arguments.configPath );
+			if( arguments.configPath.left( 4 ) != 'http' ) {
+				arguments.configPath = resolvePath( arguments.configPath );	
+			}
 			if( !( fileExists( configPath ) || directoryExists( configPath ) ) ) {
 				error( 'Config path [#configPath#] does not exist.' );
 			}
