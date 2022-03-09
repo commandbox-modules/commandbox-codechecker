@@ -41,6 +41,7 @@ component {
 	* @minSeverity Minimum rule severity to consider. Level 1-5
 	* @minSeverity.options 1,2,3,4,5
 	* @excelReportPath Path to write Excel report to
+	* @configPath File path to a config JSON file, or to a directory containing a .codechecker.json file.
 	* @verbose Output full list of files being scanned and all items found to the console
 	* @failOnMatch Sets a non-zero exit code if any matches are found
 	*/
@@ -49,13 +50,18 @@ component {
 		string categories='',
 		numeric minSeverity,
 		string excelReportPath,
+		boolean configPath=getCWD(),
 		boolean verbose=false,
 		boolean failOnMatch=false
 		) {
 
 		try {
 			// Get a fresh instance since the loaded rules are directory-aware
-			var codeCheckerService = getInstance( 'codeCheckerService@codechecker-core' ).configure( getCWD(), arguments.categories, arguments.minSeverity ?: '' );
+			
+			if( !( fileExists( configPath ) || directoryExists( configPath ) ) ) {
+				error( 'Config path [#configPath#] does not exist.' );
+			}
+			var codeCheckerService = getInstance( 'codeCheckerService@codechecker-core' ).configure( resolvePath( arguments.configPath ), arguments.categories, arguments.minSeverity ?: '' );
 		} catch( codecheckerMissingRuleFile var e ) {
 			error( message=e.message, detail=e.detail );
 		}
