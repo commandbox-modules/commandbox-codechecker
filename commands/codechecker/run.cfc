@@ -9,6 +9,7 @@
 * This file can contain the following keys:
 * .
 * - paths - Comma delimited list of file globbing paths to scan if nothing is passed to this command
+* - excludePaths - Comma delimited list of file globbing paths to ignore
 * - minSeverity - Minimum rule severity to consider if nothing is passed to this command
 * - includeRules - A struct of arrays where each struct key is a rule category and the array contains rule names to run.
 * - excludeRules - Same format as includeRules but these rules are EXCLUDED from the final list.
@@ -36,6 +37,8 @@ component {
 	/**
 	* @paths Comma delimited list of file globbing paths to scan. i.e. **.cf?
 	* @paths.optionsFileComplete true
+	* @excludePaths Comma delimited list of file globbing paths to ignore
+	* @excludePaths.optionsFileComplete true
 	* @categories Comma delimited list of categories of rules to run
 	* @categories.optionsUDF categoryComplete
 	* @minSeverity Minimum rule severity to consider. Level 1-5
@@ -47,6 +50,7 @@ component {
 	*/
 	function run(
 		string paths,
+		string excludePaths,
 		string categories='',
 		numeric minSeverity,
 		string excelReportPath,
@@ -73,6 +77,22 @@ component {
 		var configJSON = codeCheckerService.getConfigJSON()
 		var thisPaths = arguments.paths ?: configJSON.paths ?: '**.cf?';
 		thisPaths = thisPaths.listToArray();
+		
+		
+		// Exclude patterns can be a comma delimited list or an array
+		var thisExcludePaths = arguments.excludePaths ?: configJSON.excludePaths ?: '';
+		if( !isArray( thisExcludePaths ) ) {
+			thisExcludePaths = thisExcludePaths.listToArray();
+		}
+		thisExcludePaths = thisExcludePaths.map( function( path ) {
+			path = filesystemUtil.resolvePath( path );
+			if ( directoryExists( path ) ) {
+				path &= '**';
+			}
+
+			return path;
+		} );
+
 
 		job.start( 'Running CodeChecker' );
 
@@ -90,6 +110,7 @@ component {
 						path &= '**';
 					}
 					globber( path )
+						.setExcludePattern( thisExcludePaths )
 						.asArray()
 						.matches()
 						.each( function( i ) {
