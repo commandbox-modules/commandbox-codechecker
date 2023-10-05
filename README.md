@@ -30,7 +30,7 @@ codechecker run
 * **categories** - Comma delimited list of categories of rules to run. Applies on top of existing include and excludes specified in `.codechecker.json`.
 * **paths** - Comma delimited list of file globbing paths to scan. i.e. **.cf? (overrides `paths` in JSON)
 * **excludePaths** - Comma delimited list of file globbing paths to ignore
-* **minSeverity** - Minimum rule severity to consider. Level 1-5. (overrides `paths` in JSON)
+* **minSeverity** - Minimum rule severity to consider. Level 1-5 with 5 being most severe. (overrides `paths` in JSON)
 * **excelReportPath** - Path to write Excel report to
 * **verbose** = "false" - Output full list of files being scanned and all items found to the console
 * **failOnMatch** = "false" - Sets a non-zero exit code if any matches are found
