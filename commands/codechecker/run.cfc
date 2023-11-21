@@ -46,6 +46,8 @@ component {
 	* @excelReportPath Path to write Excel report to
 	* @configPath File path to a config JSON file, or to a directory containing a .codechecker.json file.
 	* @verbose Output full list of files being scanned and all items found to the console
+	* @jsonFormatter if not empty will output a CI json
+	* @jsonFormatter.options codeclimate
 	* @failOnMatch Sets a non-zero exit code if any matches are found
 	*/
 	function run(
@@ -56,6 +58,7 @@ component {
 		string excelReportPath,
 		string configPath=getCWD(),
 		boolean verbose=false,
+		string jsonFormatter='',
 		boolean failOnMatch=false
 		) {
 
@@ -283,6 +286,33 @@ component {
 
 				print.line();
 			} );
+		}
+
+		if (jsonFormatter.len()) {
+			var result_json = [];
+			switch (jsonFormatter) {
+				case 'codeclimate':
+					var severityLabel=['info', 'minor', 'major', 'critical', 'blocker'];
+					result_json = results.map(function(result) {
+						return {
+							'type': 'issue',
+							'description': result.message,
+							'check_name': result.rule,
+							'severity': severityLabel[result.severity],
+							'categories': [
+								result.category, // FIXME: Use lookup map to use supported names
+							],
+							'location': {
+								'path': replace(result.directory & result.file, filesystemUtil.resolvePath(''), ''),
+								'lines': {
+									'begin': result.lineNumber
+								} 
+							}
+						};
+					} );
+					break;
+			}
+			fileWrite(filesystemUtil.resolvePath("codechecker.json"), serializeJSON(result_json));
 		}
 
 		if( results.len() && failOnMatch ) {
