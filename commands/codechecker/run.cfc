@@ -191,6 +191,11 @@ component {
 			{ dbtype='query' }
 		 );
 
+		if( !trim( categories ).len() ) {
+			categories = valueList( qryCats.category );
+		}
+		
+
 		var colors = [ 'DarkMagenta2', 'DeepPink2', 'Blue1', 'SpringGreen2', 'OrangeRed1', 'Grey' ];
 		var thisColor = colors[ randRange( 1, colors.len() ) ];
 
