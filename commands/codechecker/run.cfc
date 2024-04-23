@@ -299,7 +299,7 @@ component {
 					formatter = new codeclimate();
 				break;
 			}
-			if (formatter) {
+			if (formatter != false) {
 				fileWrite(filesystemUtil.resolvePath(jsonOutput), serializeJSON(formatter.format(results)));
 			}
 		}
