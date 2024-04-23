@@ -60,7 +60,7 @@ component {
 		string configPath=getCWD(),
 		boolean verbose=false,
 		string jsonFormatter='',
-		string jsonOutput='codechecker.json'
+		string jsonOutput='codechecker.json',
 		boolean failOnMatch=false
 		) {
 
@@ -299,8 +299,8 @@ component {
 					formatter = new codeclimate();
 				break;
 			}
-			if (formatter != false) {
-				fileWrite(filesystemUtil.resolvePath(jsonOutput), serializeJSON(formatter.format(results)));
+			if (isObject(formatter)) {
+				fileWrite(filesystemUtil.resolvePath(jsonOutput), serializeJSON(formatter.format(results, filesystemUtil)));
 			}
 		}
 
