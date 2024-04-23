@@ -48,6 +48,7 @@ component {
 	* @verbose Output full list of files being scanned and all items found to the console
 	* @jsonFormatter if not empty will output a CI json
 	* @jsonFormatter.options codeclimate
+	* @jsonOutput if not empty will output the result in the given file name default is codechecker.cfc
 	* @failOnMatch Sets a non-zero exit code if any matches are found
 	*/
 	function run(
@@ -59,6 +60,7 @@ component {
 		string configPath=getCWD(),
 		boolean verbose=false,
 		string jsonFormatter='',
+		string jsonOutput='codechecker.json'
 		boolean failOnMatch=false
 		) {
 
@@ -287,32 +289,19 @@ component {
 				print.line();
 			} );
 		}
-
+// '
 		if (jsonFormatter.len()) {
 			var result_json = [];
+			var formatter = false;
 			switch (jsonFormatter) {
 				case 'codeclimate':
-					var severityLabel=['info', 'minor', 'major', 'critical', 'blocker'];
-					result_json = results.map(function(result) {
-						return {
-							'type': 'issue',
-							'description': result.message,
-							'check_name': result.rule,
-							'severity': severityLabel[result.severity],
-							'categories': [
-								result.category, // FIXME: Use lookup map to use supported names
-							],
-							'location': {
-								'path': replace(result.directory & result.file, filesystemUtil.resolvePath(''), ''),
-								'lines': {
-									'begin': result.lineNumber
-								} 
-							}
-						};
-					} );
-					break;
+				default:
+					formatter = new codeclimate();
+				break;
 			}
-			fileWrite(filesystemUtil.resolvePath("codechecker.json"), serializeJSON(result_json));
+			if (formatter) {
+				fileWrite(filesystemUtil.resolvePath(jsonOutput), serializeJSON(formatter.format(results)));
+			}
 		}
 
 		if( results.len() && failOnMatch ) {
