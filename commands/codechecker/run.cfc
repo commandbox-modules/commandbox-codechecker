@@ -46,6 +46,9 @@ component {
 	* @excelReportPath Path to write Excel report to
 	* @configPath File path to a config JSON file, or to a directory containing a .codechecker.json file.
 	* @verbose Output full list of files being scanned and all items found to the console
+	* @jsonFormatter if not empty will output a CI json
+	* @jsonFormatter.options codeclimate
+	* @jsonOutput if not empty will output the result in the given file name default is codechecker.cfc
 	* @failOnMatch Sets a non-zero exit code if any matches are found
 	*/
 	function run(
@@ -56,6 +59,8 @@ component {
 		string excelReportPath,
 		string configPath=getCWD(),
 		boolean verbose=false,
+		string jsonFormatter='',
+		string jsonOutput='codechecker.json',
 		boolean failOnMatch=false
 		) {
 
@@ -283,6 +288,20 @@ component {
 
 				print.line();
 			} );
+		}
+// '
+		if (jsonFormatter.len()) {
+			var result_json = [];
+			var formatter = false;
+			switch (jsonFormatter) {
+				case 'codeclimate':
+				default:
+					formatter = new codeclimate();
+				break;
+			}
+			if (isObject(formatter)) {
+				fileWrite(filesystemUtil.resolvePath(jsonOutput), serializeJSON(formatter.format(results, filesystemUtil)));
+			}
 		}
 
 		if( results.len() && failOnMatch ) {
