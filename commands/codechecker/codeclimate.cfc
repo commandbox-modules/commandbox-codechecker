@@ -23,7 +23,8 @@ component {
 					'lines': {
 						'begin': result.lineNumber
 					} 
-				}
+				},
+				'fingerprint': hash('#replace(result.directory & result.file, filesystemUtil.resolvePath(''), ''):result.lineNumber#@#result.severity#!#result.rule#', 'md5')
 			};
 		} );
 	}
