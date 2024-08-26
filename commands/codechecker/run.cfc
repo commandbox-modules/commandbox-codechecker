@@ -250,16 +250,29 @@ component {
 				excelReportPath &= '/codechecker-report-#dateTimeFormat( now(), 'yyyy-mm-dd-HHMMSS' )#.xls';
 			}
 
-			var binary = exportService.generateExcelReport( results, categories );
+			if( isEmpty( results ) ){
+				print
+					.redLine( '   No results - Excel export cancelled' )
+					.line()
+					.line();
+			} else if ( isEmpty( categories ) ) {
+				print
+					.redLine( '   No Categories - Excel report cancelled' )
+					.line()
+					.line();
+			} else {
 
-			directoryCreate( getDirectoryFromPath( excelReportPath ), true, true );
-			fileWrite( excelReportPath, binary );
+				var binary = exportService.generateExcelReport( results, categories );
 
-			print
-				.greenLine( '   Excel report created at:' )
-				.greenLine( '      #excelReportPath#' )
-				.line()
-				.line();
+				directoryCreate( getDirectoryFromPath( excelReportPath ), true, true );
+				fileWrite( excelReportPath, binary );
+
+				print
+					.greenLine( '   Excel report created at:' )
+					.greenLine( '      #excelReportPath#' )
+					.line()
+					.line();
+			} 
 
 		}
 
